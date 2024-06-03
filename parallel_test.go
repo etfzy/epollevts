@@ -1,12 +1,11 @@
 package epollevts
 
 import (
+	"epollevts/topics"
 	"fmt"
 	"log"
 	"testing"
 	"time"
-
-	"github.com/etfzy/epollevts/topics"
 )
 
 func tv1(evt_value []string) {
@@ -32,8 +31,12 @@ func tv3(evt_value []string) {
 }
 
 func TestGroupParallel(t *testing.T) {
+	topic_1, err := topics.CreateTopicMessage("/testtopic_1")
+	if err != nil {
+		log.Fatal("create topic failed:", err)
+	}
 
-	topic_1, err := topics.CreateTopicMessage("/test_topic")
+	topic_2, err := topics.CreateTopicMessage("/canying")
 	if err != nil {
 		log.Fatal("create topic failed:", err)
 	}
@@ -68,6 +71,7 @@ func TestGroupParallel(t *testing.T) {
 
 	//添加topic
 	topic_group3.AddTopic(topic_1)
+	topic_group3.AddTopic(topic_2)
 
 	//启动group
 	go topic_group3.Run()
@@ -83,6 +87,12 @@ func TestGroupParallel(t *testing.T) {
 	go func() {
 		for i := 0; i < sends; i++ {
 			topic_1.Publish()
+		}
+	}()
+
+	go func() {
+		for i := 0; i < sends; i++ {
+			topic_2.Publish()
 		}
 	}()
 
