@@ -1,31 +1,32 @@
 package epollevts
 
 import (
-	"epollevts/topics"
 	"fmt"
 	"log"
 	"testing"
 	"time"
+
+	"github.com/etfzy/epollevts/topics"
 )
 
-func tv1(evt_value []topics.EvtMsg) {
+func tv1(evt_value []string) {
 	for k, _ := range evt_value {
-		fmt.Println("topic11111:", evt_value[k].Key, ",events count:", evt_value[k].Data)
+		fmt.Println("topic11111:", evt_value[k])
 
 	}
 
 }
 
-func tv2(evt_value []topics.EvtMsg) {
+func tv2(evt_value []string) {
 	for k, _ := range evt_value {
-		fmt.Println("topic2222:", evt_value[k].Key, ",events count:", evt_value[k].Data)
+		fmt.Println("topic2222:", evt_value[k])
 	}
 
 }
 
-func tv3(evt_value []topics.EvtMsg) {
+func tv3(evt_value []string) {
 	for k, _ := range evt_value {
-		fmt.Println("topic3333:", evt_value[k].Key, ",events count:", evt_value[k].Data)
+		fmt.Println("topic3333:", evt_value[k])
 	}
 
 }
@@ -73,6 +74,12 @@ func TestGroupParallel(t *testing.T) {
 
 	//启动两个线程进行同时写
 	sends := 100000
+	go func() {
+		for i := 0; i < sends; i++ {
+			topic_1.Publish()
+		}
+	}()
+
 	go func() {
 		for i := 0; i < sends; i++ {
 			topic_1.Publish()

@@ -1,14 +1,16 @@
 package epollevts
 
 import (
-	"epollevts/topics"
 	"errors"
 	"log"
+	"syscall"
+
+	"github.com/etfzy/epollevts/topics"
 
 	"golang.org/x/sys/unix"
 )
 
-type TopicGroupCallFn func(evt_value []topics.EvtMsg)
+type TopicGroupCallFn func(evt_value []string)
 
 type TopicGroup struct {
 	Name               string
@@ -55,8 +57,8 @@ func (eb *TopicGroup) GelTopic(key string) topics.Topic {
 func (eb *TopicGroup) Run() error {
 
 	events := make([]unix.EpollEvent, eb.perProcessTopicCap)
-	msgs := make([]topics.EvtMsg, 0, eb.perProcessTopicCap)
-	var buf [8]byte
+	msgs := make([]string, 0, eb.perProcessTopicCap)
+	var buf [1]byte
 	for {
 		n, err := unix.EpollWait(eb.epFd, events, -1)
 		if err != nil {
@@ -78,25 +80,24 @@ func (eb *TopicGroup) Run() error {
 			}
 
 			//topic.GetLock().Lock()
-			_, err := unix.Read(int(topic.GetFd()), buf[:])
+			frd, _ := topic.GetFd()
+			_, err := unix.Read(int(frd), buf[:])
 			//topic.GetLock().Unlock()
 			if err != nil {
-				log.Printf("Read from eventfd error: %v", err)
+				if err == syscall.EAGAIN {
+					continue
+				} else {
+					log.Printf("Read from eventfd error: %v", err)
+				}
 			}
 
-			msgs = append(msgs, topics.EvtMsg{
-				Key:   topic.GetKey(),
-				Count: 1,
-				Data:  buf,
-			})
+			msgs = append(msgs, topic.GetKey())
 
 			eb.callBack(msgs)
 			msgs = msgs[:0]
 
 			//清零复用
-			for k, _ := range buf {
-				buf[k] = 0
-			}
+			buf[0] = 0
 		}
 	}
 }

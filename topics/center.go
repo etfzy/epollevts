@@ -14,7 +14,7 @@ const (
 
 type Topic interface {
 	Close() error
-	GetFd() int32
+	GetFd() (int32, int32)
 	GetKey() string
 	GetMode() uint32
 	SetStop()
@@ -52,8 +52,9 @@ func (tc *Center) AddTopic(epfd int, topic Topic) error {
 	}
 
 	//加入到epoll 事件中
-	ep_evt := unix.EpollEvent{Events: topic.GetMode(), Fd: int32(topic.GetFd())}
-	if err := unix.EpollCtl(epfd, unix.EPOLL_CTL_ADD, int(topic.GetFd()), &ep_evt); err != nil {
+	frd, _ := topic.GetFd()
+	ep_evt := unix.EpollEvent{Events: topic.GetMode(), Fd: int32(frd)}
+	if err := unix.EpollCtl(epfd, unix.EPOLL_CTL_ADD, int(frd), &ep_evt); err != nil {
 		return err
 	}
 
@@ -61,7 +62,7 @@ func (tc *Center) AddTopic(epfd int, topic Topic) error {
 		topic:       topic,
 		epoll_event: &ep_evt,
 	}
-	tc.mFds[topic.GetFd()] = topic.GetKey()
+	tc.mFds[frd] = topic.GetKey()
 	return nil
 }
 
@@ -73,11 +74,12 @@ func (tc *Center) DelTopic(epfd int, eventKey string) error {
 		return nil
 	}
 
-	if err := unix.EpollCtl(epfd, unix.EPOLL_CTL_DEL, int(tp.topic.GetFd()), tp.epoll_event); err != nil {
+	frd, _ := tp.topic.GetFd()
+	if err := unix.EpollCtl(epfd, unix.EPOLL_CTL_DEL, int(frd), tp.epoll_event); err != nil {
 		return err
 	}
 
-	delete(tc.mFds, tp.topic.GetFd())
+	delete(tc.mFds, frd)
 	delete(tc.mTopics, eventKey)
 
 	return nil

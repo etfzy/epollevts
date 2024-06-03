@@ -3,7 +3,8 @@ package topics
 import "sync"
 
 type Base struct {
-	Fd    int32
+	Fwd   int32
+	Frd   int32
 	Key   string
 	Mode  uint32
 	Stop  bool
@@ -22,8 +23,8 @@ func (et *Base) GetState() bool {
 	return et.Stop
 }
 
-func (et *Base) GetFd() int32 {
-	return et.Fd
+func (et *Base) GetFd() (int32, int32) {
+	return et.Frd, et.Fwd
 }
 
 func (et *Base) GetKey() string {

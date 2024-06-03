@@ -2,7 +2,6 @@ package topics
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"os"
 
@@ -11,9 +10,8 @@ import (
 
 type TopicPipe struct {
 	Base
-	fr  *os.File
-	fw  *os.File
-	Fwd int32
+	fr *os.File
+	fw *os.File
 }
 
 // mode 模式：ET 高性能；LT 不丢消息
@@ -26,14 +24,17 @@ func CreateTopicMessage(evtkey string) (Topic, error) {
 
 	et := TopicPipe{}
 	et.Base.Stop = false
-	et.Base.Fd = int32(pipeR.Fd())
+	et.Base.Frd = int32(pipeR.Fd())
 	et.Base.Key = evtkey
+
+	//只能用LT模式
 	et.Base.Mode = LT
 	et.fr = pipeR
 	et.fw = pipeW
-	et.Fwd = int32(pipeW.Fd())
-	fmt.Println(et.Fwd, et.Base.Fd)
-	if err := unix.SetNonblock(int(et.Fd), true); err != nil {
+	et.Base.Fwd = int32(pipeW.Fd())
+
+	//设置非阻塞写
+	if err := unix.SetNonblock(int(et.Fwd), true); err != nil {
 		log.Fatalf("Failed to set pipe to non-blocking: %v", err)
 	}
 	return &et, nil
@@ -45,7 +46,7 @@ func (et *TopicPipe) Publish() error {
 	}
 	buf := []byte{1}
 
-	_, err := unix.Write(int(et.Fwd), buf[:])
+	_, err := unix.Write(int(et.Base.Fwd), buf[:])
 	if err != nil {
 		return err
 	}

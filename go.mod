@@ -1,4 +1,4 @@
-module epollevts
+module github.com/etfzy/epollevts
 
 go 1.19
 
