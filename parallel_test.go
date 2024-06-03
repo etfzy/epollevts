@@ -33,7 +33,7 @@ func tv3(evt_value []string) {
 
 func TestGroupParallel(t *testing.T) {
 
-	topic_1, err := topics.CreateTopicMessage("/baihao")
+	topic_1, err := topics.CreateTopicMessage("/test_topic")
 	if err != nil {
 		log.Fatal("create topic failed:", err)
 	}
